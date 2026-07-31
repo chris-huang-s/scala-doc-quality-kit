@@ -1,13 +1,16 @@
 # scala-doc-quality-kit
 
-A small toolkit for Scala documentation quality checks.
+Markdown documentation link checker (Python) plus a GitHub Actions workflow.
 
-## What this repo is for
+## Local check
 
-- Catch broken doc links early
-- Keep code fences and examples consistent
-- Make docs review easier in CI
+```bash
+python scripts/check_doc_links.py
+```
 
-## Scope
+## Intentionally failing
 
-This initial version sets a clear direction and will be expanded with practical checks and workflow examples.
+Add a markdown link to a missing local path (for example `[missing](./nope.md)`).
+The checker reports broken local paths and exits non-zero so CI fails.
+
+Sample docs in `examples/sample-docs.md` only use good local links so CI passes.
