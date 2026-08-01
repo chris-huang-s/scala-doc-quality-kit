@@ -5,7 +5,7 @@ on:
   pull_request:
 
 jobs:
-  doc-links:
+  doc-quality:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -14,3 +14,5 @@ jobs:
           python-version: "3.12"
       - name: Check markdown links
         run: python scripts/check_doc_links.py
+      - name: Check code fence languages
+        run: python scripts/check_code_fences.py

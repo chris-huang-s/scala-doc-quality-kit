@@ -1,16 +1,17 @@
 # scala-doc-quality-kit
 
-Markdown documentation link checker (Python) plus a GitHub Actions workflow.
+Markdown documentation checks: local link integrity and fenced code language tags, plus CI.
 
-## Local check
+## Local checks
 
 ```bash
 python scripts/check_doc_links.py
+python scripts/check_code_fences.py
 ```
 
 ## Intentionally failing
 
 Add a markdown link to a missing local path (for example `[missing](./nope.md)`).
-The checker reports broken local paths and exits non-zero so CI fails.
+The link checker reports broken local paths and exits non-zero so CI fails.
 
-Sample docs in `examples/sample-docs.md` only use good local links so CI passes.
+Sample docs in `examples/sample-docs.md` only use good local links and labeled fences so CI passes.
