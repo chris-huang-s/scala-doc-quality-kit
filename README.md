@@ -11,7 +11,7 @@ python scripts/check_code_fences.py
 
 ## Intentionally failing
 
-Add a markdown link to a missing local path (for example `[missing](./nope.md)`).
-The link checker reports broken local paths and exits non-zero so CI fails.
+Add a markdown link whose target is a missing local path, for example target `./nope.md`.
+Write that as a real markdown link in a docs file (not inside backticks) and the checker will exit non-zero.
 
 Sample docs in `examples/sample-docs.md` only use good local links and labeled fences so CI passes.

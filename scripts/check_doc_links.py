@@ -8,6 +8,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 LINK_RE = re.compile(r"\[([^\]]*)\]\(([^)]+)\)")
+INLINE_CODE_RE = re.compile(r"`[^`]*`")
+FENCE_RE = re.compile(r"^```")
 
 
 def iter_md_files(root: Path):
@@ -15,6 +17,23 @@ def iter_md_files(root: Path):
         if ".git" in path.parts:
             continue
         yield path
+
+
+def strip_code(text: str) -> str:
+    """Ignore links that only appear inside code fences or inline code."""
+    lines = text.splitlines(keepends=True)
+    out = []
+    in_fence = False
+    for line in lines:
+        if FENCE_RE.match(line.strip()):
+            in_fence = not in_fence
+            out.append("\n" if line.endswith("\n") else "")
+            continue
+        if in_fence:
+            out.append("\n" if line.endswith("\n") else "")
+            continue
+        out.append(INLINE_CODE_RE.sub("", line))
+    return "".join(out)
 
 
 def is_local_link(target: str) -> bool:
@@ -32,7 +51,7 @@ def main() -> int:
     broken = []
     checked = 0
     for md in iter_md_files(ROOT):
-        text = md.read_text(encoding="utf-8")
+        text = strip_code(md.read_text(encoding="utf-8"))
         for _label, target in LINK_RE.findall(text):
             href = target.strip().split()[0].strip('"')
             if not is_local_link(href):
