@@ -1,6 +1,6 @@
 # scala-doc-quality-kit
 
-Markdown documentation checks: local link integrity, fenced code language tags, single H1 per file, plus CI.
+Markdown documentation checks: local link integrity, fenced code language tags, single H1 per file, heading spacing, plus CI.
 
 ## Local checks
 
@@ -8,6 +8,7 @@ Markdown documentation checks: local link integrity, fenced code language tags, 
 python scripts/check_doc_links.py
 python scripts/check_code_fences.py
 python scripts/check_single_h1.py
+python scripts/check_heading_spacing.py
 ```
 
 ## Intentionally failing

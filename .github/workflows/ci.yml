@@ -18,3 +18,5 @@ jobs:
         run: python scripts/check_code_fences.py
       - name: Check single H1 per doc
         run: python scripts/check_single_h1.py
+      - name: Check heading spacing
+        run: python scripts/check_heading_spacing.py
