@@ -20,3 +20,7 @@ jobs:
         run: python scripts/check_single_h1.py
       - name: Check heading spacing
         run: python scripts/check_heading_spacing.py
+      - name: Install test deps
+        run: pip install pytest
+      - name: Run pytest
+        run: pytest -q
