@@ -6,16 +6,11 @@ import re
 import sys
 from pathlib import Path
 
+from doc_quality_config import iter_md_files
+
 ROOT = Path(__file__).resolve().parents[1]
 HEADING_RE = re.compile(r"^#{2,6}\s+\S")
 FENCE_RE = re.compile(r"^```")
-
-
-def iter_md_files(root: Path):
-    for path in root.rglob("*.md"):
-        if ".git" in path.parts:
-            continue
-        yield path
 
 
 def main() -> int:

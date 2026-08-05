@@ -7,6 +7,8 @@ on:
 jobs:
   doc-quality:
     runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: scripts
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -20,3 +22,7 @@ jobs:
         run: python scripts/check_single_h1.py
       - name: Check heading spacing
         run: python scripts/check_heading_spacing.py
+      - name: Install test deps
+        run: pip install pytest
+      - name: Run pytest
+        run: pytest -q
