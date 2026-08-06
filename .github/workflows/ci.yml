@@ -14,14 +14,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Check markdown links
-        run: python scripts/check_doc_links.py
-      - name: Check code fence languages
-        run: python scripts/check_code_fences.py
-      - name: Check single H1 per doc
-        run: python scripts/check_single_h1.py
-      - name: Check heading spacing
-        run: python scripts/check_heading_spacing.py
+      - name: Run doc quality checks
+        run: python scripts/check_docs.py
       - name: Install test deps
         run: pip install pytest
       - name: Run pytest
