@@ -9,7 +9,18 @@ from pathlib import Path
 from doc_quality_config import iter_md_files
 
 ROOT = Path(__file__).resolve().parents[1]
-FENCE_RE = re.compile(r"^```([\w.+-]*)\s*$")
+FENCE_RE = re.compile(r"^```([\w.+-]*)(?:\s+\S.*)?\s*$")
+
+
+def parse_fence_line(line: str) -> tuple[bool, str]:
+    """Return whether the line opens or closes a fence and its language tag."""
+    stripped = line.strip()
+    if not stripped.startswith("```"):
+        return False, ""
+    match = FENCE_RE.match(stripped)
+    if not match:
+        return False, ""
+    return True, match.group(1)
 
 
 def main() -> int:
@@ -19,10 +30,9 @@ def main() -> int:
         lines = md.read_text(encoding="utf-8").splitlines()
         in_fence = False
         for i, line in enumerate(lines, start=1):
-            m = FENCE_RE.match(line)
-            if not m:
+            is_fence, lang = parse_fence_line(line)
+            if not is_fence:
                 continue
-            lang = m.group(1)
             if not in_fence:
                 fences += 1
                 in_fence = True
