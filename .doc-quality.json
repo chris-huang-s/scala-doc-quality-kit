@@ -4,6 +4,7 @@
   "rules": {
     "require_single_h1": true,
     "require_heading_blank_line": true,
-    "require_fence_language": true
+    "require_fence_language": true,
+    "require_scala_fence_info": true
   }
 }

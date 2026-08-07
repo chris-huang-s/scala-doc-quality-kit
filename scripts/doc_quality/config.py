@@ -12,6 +12,7 @@ DEFAULT_RULES = {
     "require_single_h1": True,
     "require_heading_blank_line": True,
     "require_fence_language": True,
+    "require_scala_fence_info": True,
 }
 
 

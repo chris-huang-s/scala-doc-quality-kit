@@ -54,6 +54,7 @@ def test_config_includes_version_and_rules():
     assert loaded["rules"]["require_single_h1"] is True
     assert loaded["rules"]["require_heading_blank_line"] is True
     assert loaded["rules"]["require_fence_language"] is True
+    assert loaded["rules"]["require_scala_fence_info"] is True
 
 
 def test_missing_config_uses_default_version_and_rules(tmp_path):
