@@ -2,15 +2,13 @@
 """Require a blank line before ## / ### headings (outside code fences)."""
 from __future__ import annotations
 
-import re
 import sys
 from pathlib import Path
 
+from doc_quality.markdown import HEADING_RE, toggle_fence
 from doc_quality_config import iter_md_files
 
 ROOT = Path(__file__).resolve().parents[1]
-HEADING_RE = re.compile(r"^#{2,6}\s+\S")
-FENCE_RE = re.compile(r"^```")
 
 
 def main() -> int:
@@ -20,9 +18,7 @@ def main() -> int:
         lines = md.read_text(encoding="utf-8").splitlines()
         in_fence = False
         for i, line in enumerate(lines):
-            if FENCE_RE.match(line.strip()):
-                in_fence = not in_fence
-                continue
+            in_fence = toggle_fence(in_fence, line)
             if in_fence:
                 continue
             if not HEADING_RE.match(line):
