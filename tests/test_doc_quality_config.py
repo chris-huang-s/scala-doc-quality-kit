@@ -44,3 +44,43 @@ def test_repo_config_keeps_examples_green():
     root = Path(__file__).resolve().parents[1]
     names = sorted(p.relative_to(root).as_posix() for p in config.iter_md_files(root))
     assert names == ["README.md", "examples/sample-docs.md"]
+
+
+def test_config_includes_version_and_rules():
+    config = load_checker("doc_quality_config")
+    root = Path(__file__).resolve().parents[1]
+    loaded = config.load_config(root)
+    assert loaded["version"] == 1
+    assert loaded["rules"]["require_single_h1"] is True
+    assert loaded["rules"]["require_heading_blank_line"] is True
+    assert loaded["rules"]["require_fence_language"] is True
+
+
+def test_missing_config_uses_default_version_and_rules(tmp_path):
+    config = load_checker("doc_quality_config")
+    loaded = config.load_config(tmp_path)
+    assert loaded["version"] == 1
+    assert loaded["rules"]["require_single_h1"] is True
+
+
+def test_rule_toggle_can_disable_single_h1(tmp_path, monkeypatch):
+    config = load_checker("doc_quality_config")
+    h1 = load_checker("check_single_h1")
+    (tmp_path / "doc.md").write_text("# One\n# Two\n", encoding="utf-8")
+    (tmp_path / ".doc-quality.json").write_text(
+        '{"version": 1, "paths": ["."], "rules": {"require_single_h1": false}}',
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(h1, "ROOT", tmp_path)
+    assert h1.main() == 0
+
+
+def test_partial_rules_keep_defaults_for_others(tmp_path):
+    config = load_checker("doc_quality_config")
+    (tmp_path / ".doc-quality.json").write_text(
+        '{"version": 1, "paths": ["."], "rules": {"require_fence_language": false}}',
+        encoding="utf-8",
+    )
+    loaded = config.load_config(tmp_path)
+    assert loaded["rules"]["require_fence_language"] is False
+    assert loaded["rules"]["require_single_h1"] is True

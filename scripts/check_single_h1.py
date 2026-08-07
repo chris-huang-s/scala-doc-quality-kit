@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 from doc_quality.markdown import count_h1
-from doc_quality_config import iter_md_files
+from doc_quality_config import iter_md_files, rule_enabled
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -14,6 +14,10 @@ __all__ = ["count_h1", "main"]
 
 
 def main() -> int:
+    if not rule_enabled(ROOT, "require_single_h1"):
+        print("skipped: require_single_h1 is disabled")
+        return 0
+
     bad = []
     checked = 0
     for md in iter_md_files(ROOT):
