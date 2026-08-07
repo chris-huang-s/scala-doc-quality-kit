@@ -2,28 +2,22 @@
 """Require language tags on Markdown fenced code blocks."""
 from __future__ import annotations
 
-import re
 import sys
 from pathlib import Path
 
-from doc_quality_config import iter_md_files
+from doc_quality.markdown import parse_fence_line
+from doc_quality_config import iter_md_files, rule_enabled
 
 ROOT = Path(__file__).resolve().parents[1]
-FENCE_RE = re.compile(r"^```([\w.+-]*)(?:\s+\S.*)?\s*$")
 
-
-def parse_fence_line(line: str) -> tuple[bool, str]:
-    """Return whether the line opens or closes a fence and its language tag."""
-    stripped = line.strip()
-    if not stripped.startswith("```"):
-        return False, ""
-    match = FENCE_RE.match(stripped)
-    if not match:
-        return False, ""
-    return True, match.group(1)
+__all__ = ["main", "parse_fence_line"]
 
 
 def main() -> int:
+    if not rule_enabled(ROOT, "require_fence_language"):
+        print("skipped: require_fence_language is disabled")
+        return 0
+
     unlabeled = []
     fences = 0
     for md in iter_md_files(ROOT):

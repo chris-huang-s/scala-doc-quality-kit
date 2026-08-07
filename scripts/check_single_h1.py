@@ -2,32 +2,22 @@
 """Require exactly one top-level (# ) heading per Markdown file."""
 from __future__ import annotations
 
-import re
 import sys
 from pathlib import Path
 
-from doc_quality_config import iter_md_files
+from doc_quality.markdown import count_h1
+from doc_quality_config import iter_md_files, rule_enabled
 
 ROOT = Path(__file__).resolve().parents[1]
-H1_RE = re.compile(r"^#\s+\S")
-FENCE_RE = re.compile(r"^```")
 
-
-def count_h1(text: str) -> int:
-    count = 0
-    in_fence = False
-    for line in text.splitlines():
-        if FENCE_RE.match(line.strip()):
-            in_fence = not in_fence
-            continue
-        if in_fence:
-            continue
-        if H1_RE.match(line):
-            count += 1
-    return count
+__all__ = ["count_h1", "main"]
 
 
 def main() -> int:
+    if not rule_enabled(ROOT, "require_single_h1"):
+        print("skipped: require_single_h1 is disabled")
+        return 0
+
     bad = []
     checked = 0
     for md in iter_md_files(ROOT):

@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CHECKERS = (
     "check_doc_links",
     "check_code_fences",
+    "check_scala_fences",
     "check_single_h1",
     "check_heading_spacing",
 )

@@ -6,12 +6,12 @@ import re
 import sys
 from pathlib import Path
 
+from doc_quality.markdown import FENCE_RE, toggle_fence
 from doc_quality_config import iter_md_files
 
 ROOT = Path(__file__).resolve().parents[1]
 LINK_RE = re.compile(r"\[([^\]]*)\]\(([^)]+)\)")
 INLINE_CODE_RE = re.compile(r"`[^`]*`")
-FENCE_RE = re.compile(r"^```")
 
 
 def strip_code(text: str) -> str:
@@ -20,10 +20,7 @@ def strip_code(text: str) -> str:
     out = []
     in_fence = False
     for line in lines:
-        if FENCE_RE.match(line.strip()):
-            in_fence = not in_fence
-            out.append("\n" if line.endswith("\n") else "")
-            continue
+        in_fence = toggle_fence(in_fence, line)
         if in_fence:
             out.append("\n" if line.endswith("\n") else "")
             continue
