@@ -63,6 +63,44 @@ def test_examples_pass_scala_fence_check():
     assert mod.main() == 0
 
 
+def test_require_scala_mdoc_rejects_plain_scala(tmp_path, monkeypatch):
+    mod = load_checker("check_scala_fences")
+    (tmp_path / "doc.md").write_text(
+        "# Doc\n\n```scala\nval x = 1\n```\n",
+        encoding="utf-8",
+    )
+    (tmp_path / ".doc-quality.json").write_text(
+        '{"version": 1, "paths": ["."], "rules": {"require_scala_mdoc": true}}',
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(mod, "ROOT", tmp_path)
+    assert mod.main() == 1
+
+
+def test_require_scala_mdoc_accepts_scala_mdoc(tmp_path, monkeypatch):
+    mod = load_checker("check_scala_fences")
+    (tmp_path / "doc.md").write_text(
+        "# Doc\n\n```scala mdoc\nval x = 1\n```\n",
+        encoding="utf-8",
+    )
+    (tmp_path / ".doc-quality.json").write_text(
+        '{"version": 1, "paths": ["."], "rules": {"require_scala_mdoc": true}}',
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(mod, "ROOT", tmp_path)
+    assert mod.main() == 0
+
+
+def test_default_allows_plain_scala_fence(tmp_path, monkeypatch):
+    mod = load_checker("check_scala_fences")
+    (tmp_path / "doc.md").write_text(
+        "# Doc\n\n```scala\nval x = 1\n```\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(mod, "ROOT", tmp_path)
+    assert mod.main() == 0
+
+
 def test_rule_toggle_can_disable_scala_fence_check(tmp_path, monkeypatch):
     mod = load_checker("check_scala_fences")
     (tmp_path / "doc.md").write_text(

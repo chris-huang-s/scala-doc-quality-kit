@@ -13,6 +13,7 @@ DEFAULT_RULES = {
     "require_heading_blank_line": True,
     "require_fence_language": True,
     "require_scala_fence_info": True,
+    "require_scala_mdoc": False,
 }
 
 
