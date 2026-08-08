@@ -14,11 +14,15 @@ def fence_info_string(line: str) -> str:
     return stripped[3:].strip()
 
 
-def is_valid_scala_fence_info(info: str) -> bool:
+def is_valid_scala_fence_info(info: str, *, require_mdoc: bool = False) -> bool:
     """Return whether a fence info string is valid for Scala docs."""
     if not info:
         return False
-    return bool(SCALA_FENCE_INFO_RE.match(info))
+    if not SCALA_FENCE_INFO_RE.match(info):
+        return False
+    if require_mdoc and "mdoc" not in info.split():
+        return False
+    return True
 
 
 def needs_scala_fence_info(lang: str, info: str) -> bool:

@@ -23,6 +23,7 @@ def main() -> int:
         print("skipped: require_scala_fence_info is disabled")
         return 0
 
+    require_mdoc = rule_enabled(ROOT, "require_scala_mdoc")
     bad = []
     checked = 0
     for md in iter_md_files(ROOT):
@@ -38,17 +39,18 @@ def main() -> int:
                 if not needs_scala_fence_info(lang, info):
                     continue
                 checked += 1
-                if not is_valid_scala_fence_info(info):
+                if not is_valid_scala_fence_info(info, require_mdoc=require_mdoc):
                     bad.append((md, i, info or "(none)"))
             else:
                 in_fence = False
 
     print(f"checked_scala_fences={checked}")
     if bad:
+        hint = "scala mdoc" if require_mdoc else "scala or scala mdoc"
         for md, line_no, info in bad:
             print(
                 f"INVALID_SCALA_FENCE: {md.relative_to(ROOT)}:{line_no} "
-                f"info={info!r} (want 'scala' or 'scala mdoc')"
+                f"info={info!r} (want {hint!r})"
             )
         return 1
     print("ok: scala fences use an explicit scala info string")
