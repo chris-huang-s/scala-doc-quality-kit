@@ -2,6 +2,7 @@
 """Run all markdown doc quality checks from one entrypoint."""
 from __future__ import annotations
 
+import argparse
 import importlib
 import sys
 from pathlib import Path
@@ -24,9 +25,48 @@ def run_checker(name: str) -> int:
     return int(mod.main())
 
 
-def main() -> int:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """Parse CLI arguments for the unified checker entrypoint."""
+    parser = argparse.ArgumentParser(
+        description="Run markdown doc quality checks",
+    )
+    parser.add_argument(
+        "--only",
+        action="append",
+        dest="only",
+        metavar="NAME",
+        help="Run only the named checker (repeatable). Default: full suite.",
+    )
+    # Default to [] so library/test callers are not polluted by process argv.
+    return parser.parse_args([] if argv is None else argv)
+
+
+def selected_checkers(only: list[str] | None) -> list[str] | int:
+    """Return checker names to run, or exit code 2 when a name is unknown."""
+    if not only:
+        return list(CHECKERS)
+    unknown = [name for name in only if name not in CHECKERS]
+    if unknown:
+        for name in unknown:
+            print(f"unknown checker: {name}", file=sys.stderr)
+        print(
+            f"known checkers: {', '.join(CHECKERS)}",
+            file=sys.stderr,
+        )
+        return 2
+    # Preserve CHECKERS order while honoring requested names
+    wanted = set(only)
+    return [name for name in CHECKERS if name in wanted]
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = parse_args(argv)
+    selected = selected_checkers(args.only)
+    if isinstance(selected, int):
+        return selected
+
     failed: list[str] = []
-    for name in CHECKERS:
+    for name in selected:
         print(f"--- {name} ---")
         rc = run_checker(name)
         if rc != 0:
@@ -41,4 +81,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(sys.argv[1:]))
