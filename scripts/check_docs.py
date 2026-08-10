@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import importlib
+import io
+import json
 import sys
 from pathlib import Path
 
@@ -38,6 +41,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         metavar="NAME",
         help="Run only the named checker (repeatable). Default: full suite.",
     )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Print a JSON summary {ok, passed, failed} instead of text.",
+    )
     # Default to [] so library/test callers are not polluted by process argv.
     return parser.parse_args([] if argv is None else argv)
 
@@ -66,12 +74,26 @@ def main(argv: list[str] | None = None) -> int:
     if isinstance(selected, int):
         return selected
 
+    passed: list[str] = []
     failed: list[str] = []
     for name in selected:
-        print(f"--- {name} ---")
-        rc = run_checker(name)
+        if not args.json:
+            print(f"--- {name} ---")
+        if args.json:
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                rc = run_checker(name)
+        else:
+            rc = run_checker(name)
         if rc != 0:
             failed.append(name)
+        else:
+            passed.append(name)
+
+    if args.json:
+        payload = {"ok": not failed, "passed": passed, "failed": failed}
+        print(json.dumps(payload, separators=(",", ":")))
+        return 1 if failed else 0
 
     if failed:
         print(f"failed checkers: {', '.join(failed)}")
