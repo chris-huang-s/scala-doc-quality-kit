@@ -86,3 +86,38 @@ def test_partial_rules_keep_defaults_for_others(tmp_path):
     loaded = config.load_config(tmp_path)
     assert loaded["rules"]["require_fence_language"] is False
     assert loaded["rules"]["require_single_h1"] is True
+
+
+def test_ignore_globs_skips_matching_files(tmp_path):
+    config = load_checker("doc_quality_config")
+    keep = tmp_path / "keep.md"
+    skip_dir = tmp_path / "drafts"
+    skip_dir.mkdir()
+    keep.write_text("# Keep\n", encoding="utf-8")
+    (skip_dir / "secret.md").write_text("# Secret\n", encoding="utf-8")
+    (tmp_path / "tmp-notes.md").write_text("# Tmp\n", encoding="utf-8")
+    (tmp_path / ".doc-quality.json").write_text(
+        '{"paths": ["."], "ignore_globs": ["drafts/*", "tmp-*.md"]}',
+        encoding="utf-8",
+    )
+    found = sorted(p.name for p in config.iter_md_files(tmp_path))
+    assert found == ["keep.md"]
+
+
+def test_empty_ignore_globs_matches_default_scan(tmp_path):
+    config = load_checker("doc_quality_config")
+    (tmp_path / "a.md").write_text("# A\n", encoding="utf-8")
+    (tmp_path / "sub").mkdir()
+    (tmp_path / "sub" / "b.md").write_text("# B\n", encoding="utf-8")
+    (tmp_path / ".doc-quality.json").write_text(
+        '{"paths": ["."], "ignore_globs": []}',
+        encoding="utf-8",
+    )
+    found = sorted(p.name for p in config.iter_md_files(tmp_path))
+    assert found == ["a.md", "b.md"]
+
+
+def test_missing_ignore_globs_defaults_empty(tmp_path):
+    config = load_checker("doc_quality_config")
+    loaded = config.load_config(tmp_path)
+    assert loaded["ignore_globs"] == []

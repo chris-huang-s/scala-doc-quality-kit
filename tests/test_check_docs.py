@@ -63,3 +63,77 @@ def test_default_path_unchanged_without_only(monkeypatch):
     monkeypatch.setattr(mod, "run_checker", fake_run)
     assert mod.main([]) == 0
     assert called == list(mod.CHECKERS)
+
+
+def test_json_summary_all_pass(monkeypatch, capsys):
+    mod = load_checker("check_docs")
+
+    def fake_run(name: str) -> int:
+        return 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    assert mod.main(["--json"]) == 0
+    import json
+
+    payload = json.loads(capsys.readouterr().out.strip())
+    assert payload["ok"] is True
+    assert payload["failed"] == []
+    assert payload["passed"] == list(mod.CHECKERS)
+
+
+def test_json_summary_reports_failures(monkeypatch, capsys):
+    mod = load_checker("check_docs")
+
+    def fake_run(name: str) -> int:
+        return 1 if name == "check_doc_links" else 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    assert mod.main(["--json"]) == 1
+    import json
+
+    payload = json.loads(capsys.readouterr().out.strip())
+    assert payload["ok"] is False
+    assert payload["failed"] == ["check_doc_links"]
+    assert "check_doc_links" not in payload["passed"]
+
+
+def test_json_with_only_filter(monkeypatch, capsys):
+    mod = load_checker("check_docs")
+    called: list[str] = []
+
+    def fake_run(name: str) -> int:
+        called.append(name)
+        return 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    assert mod.main(["--json", "--only", "check_doc_links", "--only", "check_doc_images"]) == 0
+    import json
+
+    payload = json.loads(capsys.readouterr().out.strip())
+    assert called == ["check_doc_links", "check_doc_images"]
+    assert payload["passed"] == ["check_doc_links", "check_doc_images"]
+    assert payload["failed"] == []
+    assert payload["ok"] is True
+
+
+def test_default_text_mode_unchanged(monkeypatch, capsys):
+    mod = load_checker("check_docs")
+
+    def fake_run(name: str) -> int:
+        return 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    assert mod.main([]) == 0
+    out = capsys.readouterr().out
+    assert "ok: all doc quality checks passed" in out
+    assert not out.strip().startswith("{")
+
+def test_json_output_is_only_summary_object(capsys):
+    mod = load_checker("check_docs")
+    assert mod.main(["--json"]) == 0
+    import json
+
+    out = capsys.readouterr().out.strip()
+    payload = json.loads(out)
+    assert payload["ok"] is True
+    assert "---" not in out
