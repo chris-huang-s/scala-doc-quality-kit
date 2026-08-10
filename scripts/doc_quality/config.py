@@ -7,6 +7,7 @@ from typing import Any
 
 CONFIG_NAME = ".doc-quality.json"
 DEFAULT_PATHS = ["."]
+DEFAULT_IGNORE_GLOBS: list[str] = []
 DEFAULT_VERSION = 1
 DEFAULT_RULES = {
     "require_single_h1": True,
@@ -29,6 +30,15 @@ def _normalize_rules(raw: Any) -> dict[str, bool]:
     return rules
 
 
+
+def _normalize_ignore_globs(raw: Any) -> list[str]:
+    """Return cleaned ignore glob patterns; invalid input yields an empty list."""
+    if not isinstance(raw, list):
+        return list(DEFAULT_IGNORE_GLOBS)
+    cleaned = [p for p in raw if isinstance(p, str) and p.strip()]
+    return cleaned
+
+
 def load_config(root: Path) -> dict:
     """Read .doc-quality.json or return defaults that scan the whole repo."""
     config_path = root / CONFIG_NAME
@@ -36,6 +46,7 @@ def load_config(root: Path) -> dict:
         return {
             "version": DEFAULT_VERSION,
             "paths": list(DEFAULT_PATHS),
+            "ignore_globs": list(DEFAULT_IGNORE_GLOBS),
             "rules": dict(DEFAULT_RULES),
         }
     try:
@@ -44,6 +55,7 @@ def load_config(root: Path) -> dict:
         return {
             "version": DEFAULT_VERSION,
             "paths": list(DEFAULT_PATHS),
+            "ignore_globs": list(DEFAULT_IGNORE_GLOBS),
             "rules": dict(DEFAULT_RULES),
         }
 
@@ -59,7 +71,13 @@ def load_config(root: Path) -> dict:
         paths = cleaned if cleaned else list(DEFAULT_PATHS)
 
     rules = _normalize_rules(data.get("rules"))
-    return {"version": version, "paths": paths, "rules": rules}
+    ignore_globs = _normalize_ignore_globs(data.get("ignore_globs"))
+    return {
+        "version": version,
+        "paths": paths,
+        "ignore_globs": ignore_globs,
+        "rules": rules,
+    }
 
 
 def rule_enabled(root: Path, name: str) -> bool:
