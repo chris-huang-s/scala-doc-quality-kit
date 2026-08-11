@@ -46,6 +46,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="Print a JSON summary {ok, passed, failed} instead of text.",
     )
+    parser.add_argument(
+        "--list-checkers",
+        action="store_true",
+        help="Print checker names in suite order and exit (ignores --only/--json).",
+    )
     # Default to [] so library/test callers are not polluted by process argv.
     return parser.parse_args([] if argv is None else argv)
 
@@ -70,6 +75,11 @@ def selected_checkers(only: list[str] | None) -> list[str] | int:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
+    if args.list_checkers:
+        for name in CHECKERS:
+            print(name)
+        return 0
+
     selected = selected_checkers(args.only)
     if isinstance(selected, int):
         return selected

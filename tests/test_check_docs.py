@@ -137,3 +137,26 @@ def test_json_output_is_only_summary_object(capsys):
     payload = json.loads(out)
     assert payload["ok"] is True
     assert "---" not in out
+
+
+def test_list_checkers_prints_suite_order(capsys):
+    mod = load_checker("check_docs")
+    assert mod.main(["--list-checkers"]) == 0
+    out = capsys.readouterr().out.strip().splitlines()
+    assert out == list(mod.CHECKERS)
+
+
+def test_list_checkers_skips_running_checkers(monkeypatch, capsys):
+    mod = load_checker("check_docs")
+    called: list[str] = []
+
+    def fake_run(name: str) -> int:
+        called.append(name)
+        return 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    assert mod.main(["--list-checkers", "--only", "check_doc_links", "--json"]) == 0
+    assert called == []
+    out = capsys.readouterr().out.strip().splitlines()
+    assert out == list(mod.CHECKERS)
+
