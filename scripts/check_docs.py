@@ -21,6 +21,7 @@ CHECKERS = (
     "check_single_h1",
     "check_heading_spacing",
     "check_trailing_whitespace",
+    "check_duplicate_headings",
 )
 
 
@@ -43,6 +44,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Run only the named checker (repeatable). Default: full suite.",
     )
     parser.add_argument(
+        "--skip",
+        action="append",
+        dest="skip",
+        metavar="NAME",
+        help="Skip the named checker (repeatable). Applied after --only.",
+    )
+    parser.add_argument(
         "--json",
         action="store_true",
         help="Print a JSON summary {ok, passed, failed} instead of text.",
@@ -50,17 +58,23 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--list-checkers",
         action="store_true",
-        help="Print checker names in suite order and exit (ignores --only/--json).",
+        help="Print checker names in suite order and exit (ignores --only/--skip/--json).",
     )
     # Default to [] so library/test callers are not polluted by process argv.
     return parser.parse_args([] if argv is None else argv)
 
 
-def selected_checkers(only: list[str] | None) -> list[str] | int:
+def _unknown_names(names: list[str] | None) -> list[str]:
+    """Return names that are not registered in CHECKERS."""
+    return [name for name in (names or []) if name not in CHECKERS]
+
+
+def selected_checkers(
+    only: list[str] | None,
+    skip: list[str] | None = None,
+) -> list[str] | int:
     """Return checker names to run, or exit code 2 when a name is unknown."""
-    if not only:
-        return list(CHECKERS)
-    unknown = [name for name in only if name not in CHECKERS]
+    unknown = _unknown_names(only) + _unknown_names(skip)
     if unknown:
         for name in unknown:
             print(f"unknown checker: {name}", file=sys.stderr)
@@ -69,9 +83,15 @@ def selected_checkers(only: list[str] | None) -> list[str] | int:
             file=sys.stderr,
         )
         return 2
-    # Preserve CHECKERS order while honoring requested names
-    wanted = set(only)
-    return [name for name in CHECKERS if name in wanted]
+    if not only:
+        selected = list(CHECKERS)
+    else:
+        wanted = set(only)
+        selected = [name for name in CHECKERS if name in wanted]
+    if skip:
+        skipped = set(skip)
+        selected = [name for name in selected if name not in skipped]
+    return selected
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -81,7 +101,7 @@ def main(argv: list[str] | None = None) -> int:
             print(name)
         return 0
 
-    selected = selected_checkers(args.only)
+    selected = selected_checkers(args.only, args.skip)
     if isinstance(selected, int):
         return selected
 

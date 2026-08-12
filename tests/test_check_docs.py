@@ -160,3 +160,88 @@ def test_list_checkers_skips_running_checkers(monkeypatch, capsys):
     out = capsys.readouterr().out.strip().splitlines()
     assert out == list(mod.CHECKERS)
 
+def test_skip_removes_named_checkers(monkeypatch):
+    mod = load_checker("check_docs")
+    called: list[str] = []
+
+    def fake_run(name: str) -> int:
+        called.append(name)
+        return 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    assert mod.main(["--skip", "check_code_fences"]) == 0
+    assert called == [name for name in mod.CHECKERS if name != "check_code_fences"]
+
+
+def test_skip_is_repeatable(monkeypatch):
+    mod = load_checker("check_docs")
+    called: list[str] = []
+
+    def fake_run(name: str) -> int:
+        called.append(name)
+        return 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    assert mod.main(["--skip", "check_doc_links", "--skip", "check_doc_images"]) == 0
+    skipped = {"check_doc_links", "check_doc_images"}
+    assert called == [name for name in mod.CHECKERS if name not in skipped]
+
+
+def test_skip_applied_after_only_preserves_order(monkeypatch):
+    mod = load_checker("check_docs")
+    called: list[str] = []
+
+    def fake_run(name: str) -> int:
+        called.append(name)
+        return 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    rc = mod.main(
+        [
+            "--only",
+            "check_trailing_whitespace",
+            "--only",
+            "check_doc_links",
+            "--only",
+            "check_doc_images",
+            "--skip",
+            "check_doc_links",
+        ]
+    )
+    assert rc == 0
+    assert called == ["check_doc_images", "check_trailing_whitespace"]
+
+
+def test_skip_unknown_checker_exits_2(capsys):
+    mod = load_checker("check_docs")
+    assert mod.main(["--skip", "not_a_real_checker"]) == 2
+    err = capsys.readouterr().err
+    assert "unknown checker: not_a_real_checker" in err
+
+
+def test_default_path_unchanged_without_skip(monkeypatch):
+    mod = load_checker("check_docs")
+    called: list[str] = []
+
+    def fake_run(name: str) -> int:
+        called.append(name)
+        return 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    assert mod.main([]) == 0
+    assert called == list(mod.CHECKERS)
+
+
+def test_list_checkers_ignores_skip(monkeypatch, capsys):
+    mod = load_checker("check_docs")
+    called: list[str] = []
+
+    def fake_run(name: str) -> int:
+        called.append(name)
+        return 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    assert mod.main(["--list-checkers", "--skip", "check_doc_links"]) == 0
+    assert called == []
+    out = capsys.readouterr().out.strip().splitlines()
+    assert out == list(mod.CHECKERS)
