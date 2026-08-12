@@ -21,6 +21,7 @@ CHECKERS = (
     "check_single_h1",
     "check_heading_spacing",
     "check_trailing_whitespace",
+    "check_duplicate_headings",
 )
 
 
