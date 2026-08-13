@@ -22,6 +22,7 @@ CHECKERS = (
     "check_heading_spacing",
     "check_trailing_whitespace",
     "check_duplicate_headings",
+    "check_hard_tabs",
 )
 
 
