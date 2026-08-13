@@ -23,6 +23,7 @@ CHECKERS = (
     "check_trailing_whitespace",
     "check_duplicate_headings",
     "check_hard_tabs",
+    "check_empty_link_text",
 )
 
 
