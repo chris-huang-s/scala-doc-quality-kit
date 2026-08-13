@@ -245,3 +245,71 @@ def test_list_checkers_ignores_skip(monkeypatch, capsys):
     assert called == []
     out = capsys.readouterr().out.strip().splitlines()
     assert out == list(mod.CHECKERS)
+
+
+def test_fail_fast_stops_after_first_failure(monkeypatch):
+    mod = load_checker("check_docs")
+    called: list[str] = []
+
+    def fake_run(name: str) -> int:
+        called.append(name)
+        return 1 if name == mod.CHECKERS[1] else 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    assert mod.main(["--fail-fast"]) == 1
+    assert called == list(mod.CHECKERS[:2])
+
+
+def test_without_fail_fast_runs_full_suite_after_failure(monkeypatch):
+    mod = load_checker("check_docs")
+    called: list[str] = []
+
+    def fake_run(name: str) -> int:
+        called.append(name)
+        return 1 if name == mod.CHECKERS[0] else 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    assert mod.main([]) == 1
+    assert called == list(mod.CHECKERS)
+
+
+def test_fail_fast_all_pass_runs_full_suite(monkeypatch):
+    mod = load_checker("check_docs")
+    called: list[str] = []
+
+    def fake_run(name: str) -> int:
+        called.append(name)
+        return 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    assert mod.main(["--fail-fast"]) == 0
+    assert called == list(mod.CHECKERS)
+
+
+def test_list_checkers_ignores_fail_fast(monkeypatch, capsys):
+    mod = load_checker("check_docs")
+    called: list[str] = []
+
+    def fake_run(name: str) -> int:
+        called.append(name)
+        return 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    assert mod.main(["--list-checkers", "--fail-fast"]) == 0
+    assert called == []
+    out = capsys.readouterr().out.strip().splitlines()
+    assert out == list(mod.CHECKERS)
+
+
+def test_fail_fast_unknown_checker_exits_2(capsys):
+    mod = load_checker("check_docs")
+    assert mod.main(["--fail-fast", "--only", "not_a_real_checker"]) == 2
+    err = capsys.readouterr().err
+    assert "unknown checker: not_a_real_checker" in err
+
+
+def test_fail_fast_unknown_skip_exits_2(capsys):
+    mod = load_checker("check_docs")
+    assert mod.main(["--fail-fast", "--skip", "not_a_real_checker"]) == 2
+    err = capsys.readouterr().err
+    assert "unknown checker: not_a_real_checker" in err
