@@ -58,9 +58,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Print a JSON summary {ok, passed, failed} instead of text.",
     )
     parser.add_argument(
+        "--fail-fast",
+        action="store_true",
+        help="Stop after the first failing checker. Default: run the full suite.",
+    )
+    parser.add_argument(
         "--list-checkers",
         action="store_true",
-        help="Print checker names in suite order and exit (ignores --only/--skip/--json).",
+        help="Print checker names in suite order and exit (ignores --only/--skip/--json/--fail-fast).",
     )
     # Default to [] so library/test callers are not polluted by process argv.
     return parser.parse_args([] if argv is None else argv)
@@ -120,6 +125,8 @@ def main(argv: list[str] | None = None) -> int:
             rc = run_checker(name)
         if rc != 0:
             failed.append(name)
+            if args.fail_fast:
+                break
         else:
             passed.append(name)
 
