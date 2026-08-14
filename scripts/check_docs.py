@@ -11,6 +11,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+VERSION = "0.1.0"
 
 CHECKERS = (
     "check_doc_links",
@@ -68,6 +69,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="Print checker names in suite order and exit (ignores --only/--skip/--json/--fail-fast).",
     )
+    parser.add_argument(
+        "--version",
+        action="store_true",
+        help="Print the package version and exit (ignores --only/--skip/--json/--fail-fast).",
+    )
     # Default to [] so library/test callers are not polluted by process argv.
     return parser.parse_args([] if argv is None else argv)
 
@@ -104,6 +110,9 @@ def selected_checkers(
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
+    if args.version:
+        print(VERSION)
+        return 0
     if args.list_checkers:
         for name in CHECKERS:
             print(name)
