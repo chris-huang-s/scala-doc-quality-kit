@@ -313,3 +313,47 @@ def test_fail_fast_unknown_skip_exits_2(capsys):
     assert mod.main(["--fail-fast", "--skip", "not_a_real_checker"]) == 2
     err = capsys.readouterr().err
     assert "unknown checker: not_a_real_checker" in err
+
+
+def test_version_prints_package_version(capsys):
+    mod = load_checker("check_docs")
+    assert mod.main(["--version"]) == 0
+    assert capsys.readouterr().out.strip() == "0.1.0"
+
+
+def test_version_skips_running_checkers(monkeypatch, capsys):
+    mod = load_checker("check_docs")
+    called: list[str] = []
+
+    def fake_run(name: str) -> int:
+        called.append(name)
+        return 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    assert mod.main(["--version"]) == 0
+    assert called == []
+    assert capsys.readouterr().out.strip() == "0.1.0"
+
+
+def test_version_matches_pyproject():
+    mod = load_checker("check_docs")
+    pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    version_line = next(
+        line for line in pyproject.splitlines() if line.startswith("version = ")
+    )
+    assert mod.VERSION == version_line.split("=", 1)[1].strip().strip('"')
+
+
+def test_list_checkers_ignores_version_flag_order(monkeypatch, capsys):
+    """--version takes precedence when both are passed (early return)."""
+    mod = load_checker("check_docs")
+    called: list[str] = []
+
+    def fake_run(name: str) -> int:
+        called.append(name)
+        return 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    assert mod.main(["--list-checkers", "--version"]) == 0
+    assert called == []
+    assert capsys.readouterr().out.strip() == "0.1.0"
