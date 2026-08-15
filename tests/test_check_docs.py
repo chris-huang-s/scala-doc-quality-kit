@@ -357,3 +357,59 @@ def test_list_checkers_ignores_version_flag_order(monkeypatch, capsys):
     assert mod.main(["--list-checkers", "--version"]) == 0
     assert called == []
     assert capsys.readouterr().out.strip() == "0.1.0"
+
+
+def test_quiet_suppresses_banners(monkeypatch, capsys):
+    mod = load_checker("check_docs")
+
+    def fake_run(name: str) -> int:
+        return 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    assert mod.main(["--quiet"]) == 0
+    out = capsys.readouterr().out
+    assert "---" not in out
+    assert "ok: all doc quality checks passed" in out
+
+
+def test_default_prints_banners(monkeypatch, capsys):
+    mod = load_checker("check_docs")
+
+    def fake_run(name: str) -> int:
+        return 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    assert mod.main([]) == 0
+    out = capsys.readouterr().out
+    assert f"--- {mod.CHECKERS[0]} ---" in out
+    assert "ok: all doc quality checks passed" in out
+
+
+def test_quiet_still_runs_all_checkers(monkeypatch):
+    mod = load_checker("check_docs")
+    called: list[str] = []
+
+    def fake_run(name: str) -> int:
+        called.append(name)
+        return 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    assert mod.main(["--quiet"]) == 0
+    assert called == list(mod.CHECKERS)
+
+
+def test_quiet_with_json_unchanged(monkeypatch, capsys):
+    mod = load_checker("check_docs")
+
+    def fake_run(name: str) -> int:
+        return 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    assert mod.main(["--quiet", "--json"]) == 0
+    import json
+
+    out = capsys.readouterr().out.strip()
+    payload = json.loads(out)
+    assert payload["ok"] is True
+    assert "---" not in out
+

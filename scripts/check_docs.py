@@ -26,6 +26,7 @@ CHECKERS = (
     "check_hard_tabs",
     "check_empty_link_text",
     "check_consecutive_blank_lines",
+    "check_missing_image_alt",
 )
 
 
@@ -73,6 +74,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--version",
         action="store_true",
         help="Print the package version and exit (ignores --only/--skip/--json/--fail-fast).",
+    )
+    parser.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Suppress per-checker --- name --- banners. Default: print banners.",
     )
     # Default to [] so library/test callers are not polluted by process argv.
     return parser.parse_args([] if argv is None else argv)
@@ -125,7 +131,7 @@ def main(argv: list[str] | None = None) -> int:
     passed: list[str] = []
     failed: list[str] = []
     for name in selected:
-        if not args.json:
+        if not args.json and not args.quiet:
             print(f"--- {name} ---")
         if args.json:
             buf = io.StringIO()
