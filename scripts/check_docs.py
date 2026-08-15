@@ -26,6 +26,7 @@ CHECKERS = (
     "check_hard_tabs",
     "check_empty_link_text",
     "check_consecutive_blank_lines",
+    "check_missing_image_alt",
 )
 
 
