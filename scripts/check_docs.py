@@ -81,6 +81,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="Suppress per-checker --- name --- banners. Default: print banners.",
     )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print selected checker names and exit without running them.",
+    )
     # Default to [] so library/test callers are not polluted by process argv.
     return parser.parse_args([] if argv is None else argv)
 
@@ -128,6 +133,11 @@ def main(argv: list[str] | None = None) -> int:
     selected = selected_checkers(args.only, args.skip)
     if isinstance(selected, int):
         return selected
+
+    if args.dry_run:
+        for name in selected:
+            print(name)
+        return 0
 
     passed: list[str] = []
     failed: list[str] = []
