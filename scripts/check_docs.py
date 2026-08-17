@@ -21,6 +21,7 @@ CHECKERS = (
     "check_scala_fences",
     "check_single_h1",
     "check_heading_spacing",
+    "check_heading_level_skips",
     "check_trailing_whitespace",
     "check_duplicate_headings",
     "check_hard_tabs",
