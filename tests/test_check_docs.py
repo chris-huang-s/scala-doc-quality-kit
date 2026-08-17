@@ -413,3 +413,105 @@ def test_quiet_with_json_unchanged(monkeypatch, capsys):
     assert payload["ok"] is True
     assert "---" not in out
 
+def test_dry_run_prints_selected_checkers(monkeypatch, capsys):
+    mod = load_checker("check_docs")
+    called: list[str] = []
+
+    def fake_run(name: str) -> int:
+        called.append(name)
+        return 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    assert mod.main(["--dry-run"]) == 0
+    assert called == []
+    out = capsys.readouterr().out.strip().splitlines()
+    assert out == list(mod.CHECKERS)
+
+
+def test_dry_run_respects_only(monkeypatch, capsys):
+    mod = load_checker("check_docs")
+    called: list[str] = []
+
+    def fake_run(name: str) -> int:
+        called.append(name)
+        return 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    assert mod.main(["--dry-run", "--only", "check_doc_links", "--only", "check_code_fences"]) == 0
+    assert called == []
+    out = capsys.readouterr().out.strip().splitlines()
+    assert out == ["check_doc_links", "check_code_fences"]
+
+
+def test_dry_run_respects_skip(monkeypatch, capsys):
+    mod = load_checker("check_docs")
+    called: list[str] = []
+
+    def fake_run(name: str) -> int:
+        called.append(name)
+        return 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    assert mod.main(["--dry-run", "--skip", "check_doc_links"]) == 0
+    assert called == []
+    out = capsys.readouterr().out.strip().splitlines()
+    assert out == [name for name in mod.CHECKERS if name != "check_doc_links"]
+
+
+def test_dry_run_respects_only_then_skip(monkeypatch, capsys):
+    mod = load_checker("check_docs")
+    called: list[str] = []
+
+    def fake_run(name: str) -> int:
+        called.append(name)
+        return 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    rc = mod.main(
+        [
+            "--dry-run",
+            "--only",
+            "check_doc_links",
+            "--only",
+            "check_code_fences",
+            "--only",
+            "check_single_h1",
+            "--skip",
+            "check_code_fences",
+        ]
+    )
+    assert rc == 0
+    assert called == []
+    out = capsys.readouterr().out.strip().splitlines()
+    assert out == ["check_doc_links", "check_single_h1"]
+
+
+def test_dry_run_unknown_checker_exits_2(capsys):
+    mod = load_checker("check_docs")
+    assert mod.main(["--dry-run", "--only", "not_a_real_checker"]) == 2
+    err = capsys.readouterr().err
+    assert "unknown checker: not_a_real_checker" in err
+
+
+def test_dry_run_unknown_skip_exits_2(capsys):
+    mod = load_checker("check_docs")
+    assert mod.main(["--dry-run", "--skip", "not_a_real_checker"]) == 2
+    err = capsys.readouterr().err
+    assert "unknown checker: not_a_real_checker" in err
+
+
+def test_list_checkers_ignores_dry_run_selection(monkeypatch, capsys):
+    """--list-checkers prints the full suite even with --only/--dry-run."""
+    mod = load_checker("check_docs")
+    called: list[str] = []
+
+    def fake_run(name: str) -> int:
+        called.append(name)
+        return 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    assert mod.main(["--list-checkers", "--dry-run", "--only", "check_doc_links"]) == 0
+    assert called == []
+    out = capsys.readouterr().out.strip().splitlines()
+    assert out == list(mod.CHECKERS)
+
