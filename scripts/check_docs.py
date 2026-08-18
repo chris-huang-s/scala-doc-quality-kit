@@ -28,6 +28,7 @@ CHECKERS = (
     "check_empty_link_text",
     "check_consecutive_blank_lines",
     "check_missing_image_alt",
+    "check_mixed_line_endings",
 )
 
 
@@ -86,6 +87,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="Print selected checker names and exit without running them.",
     )
+    parser.add_argument(
+        "--output",
+        metavar="PATH",
+        help="Write JSON summary {ok, passed, failed} to PATH after a run.",
+    )
     # Default to [] so library/test callers are not polluted by process argv.
     return parser.parse_args([] if argv is None else argv)
 
@@ -93,6 +99,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def _unknown_names(names: list[str] | None) -> list[str]:
     """Return names that are not registered in CHECKERS."""
     return [name for name in (names or []) if name not in CHECKERS]
+
+
+
+def write_output_json(path: str | None, payload: dict) -> None:
+    """Write {ok, passed, failed} JSON to path when --output was set."""
+    if not path:
+        return
+    Path(path).write_text(json.dumps(payload, separators=(",", ":")), encoding="utf-8")
 
 
 def selected_checkers(
@@ -157,8 +171,10 @@ def main(argv: list[str] | None = None) -> int:
         else:
             passed.append(name)
 
+    payload = {"ok": not failed, "passed": passed, "failed": failed}
+    write_output_json(args.output, payload)
+
     if args.json:
-        payload = {"ok": not failed, "passed": passed, "failed": failed}
         print(json.dumps(payload, separators=(",", ":")))
         return 1 if failed else 0
 
