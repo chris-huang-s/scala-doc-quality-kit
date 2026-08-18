@@ -515,3 +515,128 @@ def test_list_checkers_ignores_dry_run_selection(monkeypatch, capsys):
     out = capsys.readouterr().out.strip().splitlines()
     assert out == list(mod.CHECKERS)
 
+def test_output_writes_json_summary(tmp_path, monkeypatch):
+    mod = load_checker("check_docs")
+    out = tmp_path / "summary.json"
+
+    def fake_run(name: str) -> int:
+        return 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    assert mod.main(["--output", str(out)]) == 0
+    import json
+
+    payload = json.loads(out.read_text(encoding="utf-8"))
+    assert payload["ok"] is True
+    assert payload["failed"] == []
+    assert payload["passed"] == list(mod.CHECKERS)
+
+
+def test_output_reports_failures(tmp_path, monkeypatch):
+    mod = load_checker("check_docs")
+    out = tmp_path / "summary.json"
+
+    def fake_run(name: str) -> int:
+        return 1 if name == "check_doc_links" else 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    assert mod.main(["--output", str(out)]) == 1
+    import json
+
+    payload = json.loads(out.read_text(encoding="utf-8"))
+    assert payload["ok"] is False
+    assert payload["failed"] == ["check_doc_links"]
+    assert "check_doc_links" not in payload["passed"]
+
+
+def test_output_leaves_stdout_unchanged(tmp_path, monkeypatch, capsys):
+    mod = load_checker("check_docs")
+    out = tmp_path / "summary.json"
+
+    def fake_run(name: str) -> int:
+        return 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    assert mod.main(["--output", str(out)]) == 0
+    stdout = capsys.readouterr().out
+    assert "ok: all doc quality checks passed" in stdout
+    assert f"--- {mod.CHECKERS[0]} ---" in stdout
+    assert not stdout.strip().startswith("{")
+
+
+def test_output_with_json_still_prints_summary(tmp_path, monkeypatch, capsys):
+    mod = load_checker("check_docs")
+    out = tmp_path / "summary.json"
+
+    def fake_run(name: str) -> int:
+        return 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    assert mod.main(["--json", "--output", str(out)]) == 0
+    import json
+
+    stdout_payload = json.loads(capsys.readouterr().out.strip())
+    file_payload = json.loads(out.read_text(encoding="utf-8"))
+    assert stdout_payload == file_payload
+    assert file_payload["ok"] is True
+
+
+def test_list_checkers_skips_output_write(tmp_path, monkeypatch, capsys):
+    mod = load_checker("check_docs")
+    out = tmp_path / "summary.json"
+    called: list[str] = []
+
+    def fake_run(name: str) -> int:
+        called.append(name)
+        return 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    assert mod.main(["--list-checkers", "--output", str(out)]) == 0
+    assert called == []
+    assert not out.exists()
+    assert capsys.readouterr().out.strip().splitlines() == list(mod.CHECKERS)
+
+
+def test_version_skips_output_write(tmp_path, monkeypatch, capsys):
+    mod = load_checker("check_docs")
+    out = tmp_path / "summary.json"
+    called: list[str] = []
+
+    def fake_run(name: str) -> int:
+        called.append(name)
+        return 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    assert mod.main(["--version", "--output", str(out)]) == 0
+    assert called == []
+    assert not out.exists()
+    assert capsys.readouterr().out.strip() == "0.1.0"
+
+
+def test_dry_run_skips_output_write(tmp_path, monkeypatch, capsys):
+    mod = load_checker("check_docs")
+    out = tmp_path / "summary.json"
+    called: list[str] = []
+
+    def fake_run(name: str) -> int:
+        called.append(name)
+        return 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    assert mod.main(["--dry-run", "--output", str(out)]) == 0
+    assert called == []
+    assert not out.exists()
+    assert capsys.readouterr().out.strip().splitlines() == list(mod.CHECKERS)
+
+
+def test_without_output_does_not_write_file(tmp_path, monkeypatch):
+    mod = load_checker("check_docs")
+
+    def fake_run(name: str) -> int:
+        return 0
+
+    monkeypatch.setattr(mod, "run_checker", fake_run)
+    monkeypatch.chdir(tmp_path)
+    assert mod.main([]) == 0
+    assert list(tmp_path.glob("*.json")) == []
+
