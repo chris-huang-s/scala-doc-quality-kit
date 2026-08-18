@@ -28,6 +28,7 @@ CHECKERS = (
     "check_empty_link_text",
     "check_consecutive_blank_lines",
     "check_missing_image_alt",
+    "check_mixed_line_endings",
 )
 
 
