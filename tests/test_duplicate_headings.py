@@ -50,3 +50,17 @@ def test_repo_docs_have_no_duplicate_headings():
 def test_check_docs_includes_duplicate_heading_checker():
     mod = load_checker("check_docs")
     assert "check_duplicate_headings" in mod.CHECKERS
+
+
+def test_find_duplicate_headings_detects_slug_collisions():
+    mod = load_checker("check_duplicate_headings")
+    text = "# Title\n\n## C++ Setup!\n\n## C Setup\n"
+    dups = mod.find_duplicate_headings(text)
+    assert dups == [(5, "C Setup", "c-setup")]
+
+
+def test_find_duplicate_headings_ignores_non_slug_lines():
+    mod = load_checker("check_duplicate_headings")
+    text = "# Title\n\n## !!!\n\n## ???\n"
+    dups = mod.find_duplicate_headings(text)
+    assert dups == []

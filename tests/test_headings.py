@@ -49,3 +49,15 @@ def test_examples_pass_heading_checks():
     spacing = load_checker("check_heading_spacing")
     assert h1.main() == 0
     assert spacing.main() == 0
+
+
+def test_heading_slug_normalizes_formatting():
+    from doc_quality.markdown import heading_slug
+
+    assert heading_slug("  Hello, *Scala* Docs!  ") == "hello-scala-docs"
+
+
+def test_heading_slug_collapses_whitespace_and_symbols():
+    from doc_quality.markdown import heading_slug
+
+    assert heading_slug("API   v2 / reference") == "api-v2-reference"
