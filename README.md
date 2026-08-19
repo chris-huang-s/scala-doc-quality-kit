@@ -17,3 +17,9 @@ Add a markdown link whose target is a missing local path, for example target `./
 Write that as a real markdown link in a docs file (not inside backticks) and the checker will exit non-zero.
 
 Sample docs in `examples/sample-docs.md` only use good local links and labeled fences so CI passes.
+
+
+## Path override
+
+Set `DOC_QUALITY_PATHS` to override configured scan paths at runtime.
+Use a comma-separated list such as `DOC_QUALITY_PATHS="README.md,examples"`.

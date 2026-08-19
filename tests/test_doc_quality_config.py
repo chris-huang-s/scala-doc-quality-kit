@@ -121,3 +121,34 @@ def test_missing_ignore_globs_defaults_empty(tmp_path):
     config = load_checker("doc_quality_config")
     loaded = config.load_config(tmp_path)
     assert loaded["ignore_globs"] == []
+
+
+def test_env_override_replaces_config_paths(tmp_path, monkeypatch):
+    config = load_checker("doc_quality_config")
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    extra = tmp_path / "extra"
+    extra.mkdir()
+    (docs / "in-config.md").write_text("# Docs\n", encoding="utf-8")
+    (extra / "from-env.md").write_text("# Extra\n", encoding="utf-8")
+    (tmp_path / ".doc-quality.json").write_text('{"paths": ["docs"]}', encoding="utf-8")
+
+    monkeypatch.setenv("DOC_QUALITY_PATHS", "extra")
+
+    found = sorted(p.name for p in config.iter_md_files(tmp_path))
+    assert found == ["from-env.md"]
+
+
+def test_env_override_supports_multiple_paths(tmp_path, monkeypatch):
+    config = load_checker("doc_quality_config")
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    notes = tmp_path / "notes"
+    notes.mkdir()
+    (docs / "a.md").write_text("# A\n", encoding="utf-8")
+    (notes / "b.md").write_text("# B\n", encoding="utf-8")
+
+    monkeypatch.setenv("DOC_QUALITY_PATHS", "docs, notes")
+
+    found = sorted(p.name for p in config.iter_md_files(tmp_path))
+    assert found == ["a.md", "b.md"]
