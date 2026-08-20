@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+from typing import Iterator
 
 FENCE_RE = re.compile(r"^```")
 FENCE_OPEN_RE = re.compile(r"^```([\w.+-]*)(?:\s+\S.*)?\s*$")
@@ -26,6 +27,22 @@ def toggle_fence(in_fence: bool, line: str) -> bool:
     if FENCE_RE.match(line.strip()):
         return not in_fence
     return in_fence
+
+
+
+
+def iter_headings(text: str) -> Iterator[tuple[int, str, int]]:
+    """Yield (level, text, line_no) for ATX headings outside fenced code blocks."""
+    in_fence = False
+    for line_no, line in enumerate(text.splitlines(), start=1):
+        in_fence = toggle_fence(in_fence, line)
+        if in_fence:
+            continue
+        match = HEADING_TEXT_RE.match(line)
+        if not match:
+            continue
+        level = len(line) - len(line.lstrip("#"))
+        yield level, match.group(1), line_no
 
 
 def count_h1(text: str) -> int:

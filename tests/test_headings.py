@@ -61,3 +61,25 @@ def test_heading_slug_collapses_whitespace_and_symbols():
     from doc_quality.markdown import heading_slug
 
     assert heading_slug("API   v2 / reference") == "api-v2-reference"
+
+
+def test_iter_headings_yields_level_text_and_line_no():
+    from doc_quality.markdown import iter_headings
+
+    text = "# Title\n\n## Section\n### Detail\n"
+    assert list(iter_headings(text)) == [
+        (1, "Title", 1),
+        (2, "Section", 3),
+        (3, "Detail", 4),
+    ]
+
+
+def test_iter_headings_skips_headings_inside_fences():
+    from doc_quality.markdown import iter_headings
+
+    text = "# Real\n\n```text\n# Fake\n```\n\n## Outside\n"
+    assert list(iter_headings(text)) == [
+        (1, "Real", 1),
+        (2, "Outside", 7),
+    ]
+
