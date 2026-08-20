@@ -152,3 +152,39 @@ def test_env_override_supports_multiple_paths(tmp_path, monkeypatch):
 
     found = sorted(p.name for p in config.iter_md_files(tmp_path))
     assert found == ["a.md", "b.md"]
+
+
+def test_ignore_globs_matches_basename_in_nested_dirs(tmp_path):
+    """Basename-only globs skip matching files at any depth."""
+    config = load_checker("doc_quality_config")
+    keep = tmp_path / "docs"
+    keep.mkdir()
+    (keep / "guide.md").write_text("# Guide\n", encoding="utf-8")
+    nested = tmp_path / "docs" / "internal"
+    nested.mkdir()
+    (nested / "TODO.md").write_text("# Todo\n", encoding="utf-8")
+    (tmp_path / "TODO.md").write_text("# Root todo\n", encoding="utf-8")
+    (tmp_path / ".doc-quality.json").write_text(
+        '{"paths": ["."], "ignore_globs": ["TODO.md"]}',
+        encoding="utf-8",
+    )
+    found = sorted(p.relative_to(tmp_path).as_posix() for p in config.iter_md_files(tmp_path))
+    assert found == ["docs/guide.md"]
+
+
+def test_ignore_globs_matches_nested_path_patterns(tmp_path):
+    """Path globs skip nested trees while leaving sibling docs."""
+    config = load_checker("doc_quality_config")
+    vendor = tmp_path / "vendor" / "pkg"
+    vendor.mkdir(parents=True)
+    (vendor / "readme.md").write_text("# Vendor\n", encoding="utf-8")
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "api.md").write_text("# API\n", encoding="utf-8")
+    (tmp_path / ".doc-quality.json").write_text(
+        '{"paths": ["."], "ignore_globs": ["vendor/**/*.md"]}',
+        encoding="utf-8",
+    )
+    found = sorted(p.relative_to(tmp_path).as_posix() for p in config.iter_md_files(tmp_path))
+    assert found == ["docs/api.md"]
+
